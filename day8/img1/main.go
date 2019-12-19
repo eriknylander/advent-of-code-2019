@@ -36,7 +36,6 @@ func main() {
 	for i < len(ia) {
 		current := i
 		i = (i+width*height)
-		//fmt.Println(ia[current:i])
 		layers = append(layers, ia[current:i])
 	}
 
