@@ -32,7 +32,7 @@ type asteroid struct {
 }
 
 func main() {
-	system := buildSystem("./input.txt")
+	system := buildSystem("../input.txt")
 	asteroidsInSystem := []asteroid{}
 
 	for y := 0; y < len(system); y++ {
