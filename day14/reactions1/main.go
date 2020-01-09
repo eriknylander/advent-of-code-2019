@@ -95,7 +95,8 @@ func main() {
 	fuelNode := rootNode{}
 	fuelNode.edges = buildReactionTree(reactions["FUEL"].inputs, reactions, conversionTable)
 
-	fmt.Println(conversionTable)
+	required := calcQuantitiesRoot(fuelNode)
+	fmt.Println(required)
 }
 
 func buildReactionTree(inputs []elementQuantity, reactions map[string]reaction, conversionTable map[string]conversion) []weightedNode {
@@ -116,4 +117,25 @@ func buildReactionTree(inputs []elementQuantity, reactions map[string]reaction, 
 		}
 	}
 	return nodes
+}
+
+func calcQuantitiesRoot(root rootNode) map[string]int {
+	eqs := map[string]int{}
+	for _, e := range root.edges {
+		eqs = calcQuantities(e, e.weight, eqs)
+	}
+
+	return eqs
+}
+
+func calcQuantities(node weightedNode, factor int, eqs map[string]int) map[string]int {
+	if len(node.edges) == 0 {
+		eqs[node.element] += factor
+	}
+
+	for _, e := range node.edges {
+		eqs = calcQuantities(e, factor*e.weight, eqs)
+	}
+
+	return eqs
 }
