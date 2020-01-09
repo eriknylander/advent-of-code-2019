@@ -24,6 +24,16 @@ type conversion struct {
 	em   elementQuantity
 }
 
+type rootNode struct {
+	edges []weightedNode
+}
+
+type weightedNode struct {
+	weight  int
+	element string
+	edges   []weightedNode
+}
+
 func parseElementQuantity(r string) elementQuantity {
 	r = strings.Trim(r, " ")
 
@@ -36,9 +46,9 @@ func parseElementQuantity(r string) elementQuantity {
 	return elementQuantity{element: element, quantity: quantity}
 }
 
-func readInputFile() []reaction {
-	reactions := []reaction{}
-	file, err := os.Open("./example1.txt")
+func readInputFile() map[string]reaction {
+	reactions := make(map[string]reaction)
+	file, err := os.Open("./example2.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -58,10 +68,10 @@ func readInputFile() []reaction {
 			inputs = append(inputs, parseElementQuantity(inputStr))
 		}
 
-		reactions = append(reactions, reaction{
+		reactions[result.element] = reaction{
 			inputs: inputs,
 			result: result,
-		})
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -82,29 +92,28 @@ func main() {
 		}
 	}
 
-	conversionTableFinished := false
-	for !conversionTableFinished {
-		for _, r := range reactions {
-			if _, ok := conversionTable[r.result.element]; !ok {
-				ores := 0
-				for _, ie := range r.inputs {
-					if ce, ok := conversionTable[ie.element]; ok {
-						o := ce.ores.quantity
-						for o/ie.quantity < 1 {
-							o += ce.ores.quantity
-						}
-						ores += o
-					} else {
-						break
-					}
-				}
-				conversionTable[r.result.element] = conversion{
-					ores: elementQuantity{element: "ORE", quantity: ores},
-					em:   r.result,
-				}
-			}
-		}
-	}
+	fuelNode := rootNode{}
+	fuelNode.edges = buildReactionTree(reactions["FUEL"].inputs, reactions, conversionTable)
 
 	fmt.Println(conversionTable)
+}
+
+func buildReactionTree(inputs []elementQuantity, reactions map[string]reaction, conversionTable map[string]conversion) []weightedNode {
+	nodes := []weightedNode{}
+	for _, in := range inputs {
+		if _, ok := conversionTable[in.element]; ok {
+			nodes = append(nodes, weightedNode{
+				weight:  in.quantity,
+				element: in.element,
+			})
+		} else {
+			r := reactions[in.element]
+			nodes = append(nodes, weightedNode{
+				weight:  in.quantity,
+				element: in.element,
+				edges:   buildReactionTree(r.inputs, reactions, conversionTable),
+			})
+		}
+	}
+	return nodes
 }
