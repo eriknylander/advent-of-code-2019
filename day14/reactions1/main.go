@@ -97,6 +97,25 @@ func main() {
 
 	required := calcQuantitiesRoot(fuelNode)
 	fmt.Println(required)
+
+	ores := 0
+	for e, q := range required {
+		c := conversionTable[e]
+		if q < c.em.quantity {
+			ores += c.ores.quantity
+		} else if q%c.em.quantity == 0 {
+			ores += (c.ores.quantity * (q / c.em.quantity))
+		} else {
+			a := q
+			for a%c.em.quantity != 0 {
+				a++
+			}
+
+			ores += (c.ores.quantity * (a / c.em.quantity))
+		}
+	}
+
+	fmt.Println(ores)
 }
 
 func buildReactionTree(inputs []elementQuantity, reactions map[string]reaction, conversionTable map[string]conversion) []weightedNode {
