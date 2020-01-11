@@ -29,9 +29,10 @@ type rootNode struct {
 }
 
 type weightedNode struct {
-	weight  int
-	element string
-	edges   []weightedNode
+	weight     int
+	element    string
+	multiplier int
+	edges      []weightedNode
 }
 
 func parseElementQuantity(r string) elementQuantity {
@@ -48,7 +49,7 @@ func parseElementQuantity(r string) elementQuantity {
 
 func readInputFile() map[string]reaction {
 	reactions := make(map[string]reaction)
-	file, err := os.Open("./example2.txt")
+	file, err := os.Open("./example3.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -123,15 +124,17 @@ func buildReactionTree(inputs []elementQuantity, reactions map[string]reaction, 
 	for _, in := range inputs {
 		if _, ok := conversionTable[in.element]; ok {
 			nodes = append(nodes, weightedNode{
-				weight:  in.quantity,
-				element: in.element,
+				weight:     in.quantity,
+				element:    in.element,
+				multiplier: 1,
 			})
 		} else {
 			r := reactions[in.element]
 			nodes = append(nodes, weightedNode{
-				weight:  in.quantity,
-				element: in.element,
-				edges:   buildReactionTree(r.inputs, reactions, conversionTable),
+				weight:     in.quantity,
+				element:    in.element,
+				multiplier: r.result.quantity,
+				edges:      buildReactionTree(r.inputs, reactions, conversionTable),
 			})
 		}
 	}
@@ -153,7 +156,16 @@ func calcQuantities(node weightedNode, factor int, eqs map[string]int) map[strin
 	}
 
 	for _, e := range node.edges {
-		eqs = calcQuantities(e, factor*e.weight, eqs)
+		newFactor := e.weight
+		if node.weight > node.multiplier {
+			m := 1
+			for node.weight > node.multiplier*m {
+				m++
+			}
+			newFactor *= m
+		}
+
+		eqs = calcQuantities(e, newFactor, eqs)
 	}
 
 	return eqs
